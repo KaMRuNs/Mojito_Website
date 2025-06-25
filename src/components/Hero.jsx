@@ -1,8 +1,15 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { SplitText } from "gsap/all";
+import { useRef } from "react"; // useRef is already imported, good.
+import { useMediaQuery } from "react-responsive";
 
 const Hero = () => {
+  const videoRef = useRef();
+  // Add this line to declare videoTimelineRef using useRef
+  const videoTimelineRef = useRef(null);
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+
   useGSAP(() => {
     const heroSplit = new SplitText(".title", { type: "chars, words" });
     const paragraphSplit = new SplitText(".subtitle", { type: "lines" });
@@ -36,7 +43,29 @@ const Hero = () => {
       })
       .to(".right-leaf", { y: 200 }, 0)
       .to(".left-leaf", { y: -200 }, 0);
+
+    const startValue = isMobile ? "topb50%" : "center 60%";
+    const endValue = isMobile ? "120% top" : "bottom top";
+
+    // Now videoTimelineRef is defined and its .current property can be assigned
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "video",
+        start: startValue,
+        end: endValue,
+        scrub: true,
+        pin: true,
+      },
+    });
+
+    videoRef.current.onloadedmetadata = () => {
+      // Access the timeline correctly from the ref's current property
+      tl.to(videoRef.current, {
+        currentTime: videoRef.current.duration,
+      });
+    };
   }, []);
+
   return (
     <>
       <section id="hero" className="noisy">
@@ -70,6 +99,16 @@ const Hero = () => {
           </div>
         </div>
       </section>
+
+      <div className="video absolute inset-0">
+        <video
+          ref={videoRef}
+          src="/videos/output.mp4"
+          muted
+          playsInline
+          preload="auto"
+        />
+      </div>
     </>
   );
 };
